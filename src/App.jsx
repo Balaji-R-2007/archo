@@ -7,6 +7,7 @@ const App = () => {
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [level, setLevel] = useState(1);
+  const [isPaused, SetIsPaused] = useState(false);
   
   // Refs
   const canvasRef = useRef(null);
@@ -152,9 +153,14 @@ const App = () => {
     
     const handleKeyDown = (e) => {
       keysRef.current[e.key] = true;
+
+      //Handle pause
+      if (e.key === 'Escape' || e.key === 'p') {
+        SetIsPaused(prev => !prev);
+      }
       
       // Fire laser on spacebar
-      if (e.key === ' ' && !gameOver) {
+      if (e.key === ' ' && !gameOver && !isPaused) {
         fireLaser();
       }
     };
@@ -175,7 +181,7 @@ const App = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [gameStarted, gameOver, sounds]);
+  }, [gameStarted, gameOver, sounds, isPaused]);
   
   // Create asteroids
   const createAsteroids = (level) => {
@@ -330,7 +336,7 @@ const App = () => {
   
   // Main game loop
   const gameLoop = (timestamp) => {
-    if (gameOver) return;
+    if (gameOver || isPaused) return;
     
     const delta = timestamp - lastTimeRef.current;
     lastTimeRef.current = timestamp;
@@ -403,6 +409,7 @@ const App = () => {
   
   // Update ship position and physics
   const updateShip = (delta) => {
+    if (isPaused) return;
     const ship = shipRef.current;
     const keys = keysRef.current;
     
@@ -513,6 +520,7 @@ const App = () => {
   
   // Update lasers
   const updateLasers = () => {
+    if (isPaused) return;
     const canvas = canvasRef.current;
     const lasers = lasersRef.current;
     
@@ -560,6 +568,7 @@ const App = () => {
   
   // Update asteroids
   const updateAsteroids = () => {
+    if (isPaused) return;
     const canvas = canvasRef.current;
     const asteroids = asteroidsRef.current;
     
@@ -617,6 +626,7 @@ const App = () => {
   
   // Update explosions
   const updateExplosions = () => {
+    if (isPaused) return;
     const explosions = explosionsRef.current;
     
     for (let i = explosions.length - 1; i >= 0; i--) {
@@ -700,6 +710,7 @@ const App = () => {
   
   // Check for collisions
   const checkCollisions = () => {
+    if (isPaused) return;
     const ship = shipRef.current;
     const lasers = lasersRef.current;
     const asteroids = asteroidsRef.current;
@@ -781,7 +792,8 @@ const App = () => {
     setLives(3);
     setLevel(1);
     setGameOver(false);
-    setGameStarted(true);
+    setGameStarted(true)
+    SetIsPaused(false);
     
     lasersRef.current = [];
     asteroidsRef.current = [];
@@ -829,6 +841,19 @@ const App = () => {
             onClick={startGame}
           >
             PLAY AGAIN
+          </button>
+        </div>
+      )}
+      {/* Pause Screen */}
+      {isPaused && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70 text-white">
+          <h1 className="text-6xl mb-6 font-bold">PAUSED</h1>
+          <p className="text-3xl mb-6">Game Paused</p>
+          <button
+            className="px-8 py-4 bg-blue-600 text-white text-xl rounded-lg hover:bg-blue-700 transition"
+            onClick={() => setIsPaused(false)}
+          >
+            RESUME
           </button>
         </div>
       )}
